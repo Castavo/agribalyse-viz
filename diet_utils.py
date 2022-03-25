@@ -6,7 +6,6 @@ And each line would be how much of the food chosen you eat per year (?)
 """
 from collections import defaultdict
 import numpy as np
-import pandas as pd
 
 def random_diet(food_codes, mean_weight=10, std_dev_weight=5, n_foods=100, seed=42):
     """Returns a random diet"""
