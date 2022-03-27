@@ -2,8 +2,9 @@ import streamlit as st
 import altair as alt
 import pandas as pd
 import numpy as np
+from collections import defaultdict
 
-from diet_utils import random_diet
+from diet_utils import random_diet,Diet
 
 st.title("How's your diet ?")
 
@@ -15,10 +16,12 @@ def load_agribalyse():
 agribalyse = load_agribalyse().copy(deep=True)
 
 # Temporary
+diet_list = ["Veggie", "Vegan", "Flexie", "Carnist", "Pesci", "Custom"]
 DIETS = dict(zip(
-    ["Veggie", "Vegan", "Flexie", "Carnist", "Pesci", "Custom"],
-    [random_diet(agribalyse["Ciqual Code"], seed=i) for i in range(6)]
+    diet_list,
+    [Diet(diet_name) for diet_name in diet_list]
 ))
+
 
 # Chosing colors for each food group
 cat_20 = "1f77b4aec7e8ff7f0effbb782ca02c98df8ad62728ff98969467bdc5b0d58c564bc49c94e377c2f7b6d27f7f7fc7c7c7bcbd22dbdb8d17becf9edae5"
