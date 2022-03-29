@@ -3,8 +3,20 @@ import altair as alt
 import pandas as pd
 import numpy as np
 from collections import defaultdict
+import plotly.figure_factory as ff
+import plotly.graph_objects as go
 
-from diet_utils import random_diet,Diet
+from diet_utils import random_diet,Diet,Impact
+
+# Add histogram data
+x1 = np.random.randn(200) - 2
+x2 = np.random.randn(200)
+x3 = np.random.randn(200) + 2
+
+# Group data together
+hist_data = [x1, x2, x3]
+
+group_labels = ['Group 1', 'Group 2', 'Group 3']
 
 st.title("How's your diet ?")
 
@@ -17,10 +29,7 @@ agribalyse = load_agribalyse().copy(deep=True)
 
 # Temporary
 diet_list = ["Veggie", "Vegan", "Flexie", "Carnist", "Pesci", "Custom"]
-DIETS = dict(zip(
-    diet_list,
-    [Diet(diet_name) for diet_name in diet_list]
-))
+DIETS = dict(zip(diet_list,[Diet(diet_name) for diet_name in diet_list]))
 
 
 # Chosing colors for each food group
@@ -64,3 +73,34 @@ with right:
         color=alt.Color(field="Food Group", type="nominal", scale=FOOD_COLOR_SCALE),
     )
     st.altair_chart(composition)
+
+#####################################################################################################################
+    st.header("Environmental Impact")
+    categories = ['CO2','Ozone Layer depletion','Particles',
+              'water&land acidification', 'Land use', 'Terrestrial Eutrophication']
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatterpolar(
+        # st.session_state.diet_chosen représente la diet sélectionné
+        r=[Impact(st.session_state.diet_chosen,indicator) for indicator in categories],
+        theta=categories,
+        fill='toself',
+        name='Product A'
+    ))
+    # fig.add_trace(go.Scatterpolar(
+    #     r=[4, 3, 2.5, 1, 2],
+    #     theta=categories,
+    #     fill='toself',
+    #     name='Product B'
+    # ))
+
+    fig.update_layout(
+    polar=dict(
+        radialaxis=dict(
+        visible=True,
+        range=[0, 5]
+        )),
+    showlegend=False
+    )
+    st.plotly_chart(fig, use_container_width=True)
