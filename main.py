@@ -6,7 +6,7 @@ from collections import defaultdict
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
 
-from diet_utils import random_diet,Diet,Impact
+from diet_utils import Impact_normalised, random_diet,Diet,Impact
 
 # Add histogram data
 x1 = np.random.randn(200) - 2
@@ -87,7 +87,7 @@ with right:
 
     fig.add_trace(go.Scatterpolar(
         # st.session_state.diet_chosen représente la diet sélectionné
-        r=[Impact(st.session_state.diet_chosen,indicator) for indicator in categories],
+        r=[Impact_normalised(st.session_state.diet_chosen,indicator) for indicator in categories],
         theta=categories,
         fill='toself',
         name='Product A'
@@ -103,7 +103,7 @@ with right:
     polar=dict(
         radialaxis=dict(
         visible=True,
-        range=[0, 5]
+        range=[0, 11]
         )),
     showlegend=False
     )

@@ -21,6 +21,8 @@ def random_diet(food_codes, mean_weight=10, std_dev_weight=5, n_foods=100, seed=
     food_weights = random.normal(loc=mean_weight, scale=std_dev_weight, size=n_foods)
     return defaultdict(float, zip(chosen_foods, food_weights))
 
+diet_list = ["Veggie", "Vegan", "Flexie", "Carnist", "Pesci", "Custom"]
+
 brocoli = 20006
 carotte = 20008
 pomme = 13620
@@ -52,6 +54,15 @@ dic_food_weight = {
     "Pesci":[0.1,0.1,0.15,0.1,0.1,0.1,0.1,0.12,0.12,0.12],
     "Custom":[0.1,0.1,0.15,0.1,0.1,0.1,0.1,0.12,0.12,0.12]
     }
+
+indicator_to_column_name = {
+        'CO2':'Climate change (KG CO2 EQ / KG product)',
+        'Ozone Layer depletion':'Depletion of the ozone layer (E-06 kg CVC11 Eq / kg product)',
+        'Terrestrial Eutrophication':'Terrestrial eutrophication (mol N eq / kg of product)',
+        'Land use':'Land use (Pt / kg of product)',
+        'water&land acidification':'Terrestiral and freshwater acidification (mol h + eq / kg product)',
+        'Particles':'Particles (E-06 Disease Inc, / kg of product)'
+        }
 
 def Diet(diet_name):
     '''
@@ -91,51 +102,20 @@ def Impact(diet_name,indicator):
         output : Total impact of the diet for one day according to the indicator (string)
     '''
     n = 6 # number of indicator
-    indicator_to_column_name = {
-        'CO2':'Climate change (KG CO2 EQ / KG product)',
-        'Ozone Layer depletion':'Depletion of the ozone layer (E-06 kg CVC11 Eq / kg product)',
-        'Terrestrial Eutrophication':'Terrestrial eutrophication (mol N eq / kg of product)',
-        'Land use':'Land use (Pt / kg of product)',
-        'water&land acidification':'Terrestiral and freshwater acidification (mol h + eq / kg product)',
-        'Particles':'Particles (E-06 Disease Inc, / kg of product)'
-        }
+    
     column_name = indicator_to_column_name[indicator]
-    if diet_name=="Veggie":
-        chosen_foods = dic_chosen_foods["Veggie"]
-        food_weight = dic_food_weight["Veggie"]
-        sum = 0
-        for i in range(n):
-            sum += food_weight[i] * agribalyse[agribalyse['Ciqual Code'] == chosen_foods[i]][column_name].mean()
-        return sum
-    if diet_name=="Vegan":
-        chosen_foods = dic_chosen_foods["Vegan"]
-        food_weight = dic_food_weight["Vegan"]
-        for i in range(n):
-            sum += food_weight[i] * agribalyse[agribalyse['Ciqual Code'] == chosen_foods[i]][column_name].mean()
-        return sum
-    if diet_name=="Flexie":
-        chosen_foods = dic_chosen_foods["Flexie"]
-        food_weight = dic_food_weight["Flexie"]
-        for i in range(n):
-            sum += food_weight[i] * agribalyse[agribalyse['Ciqual Code'] == chosen_foods[i]][column_name].mean()
-        return sum
-    if diet_name=="Carnist":
-        chosen_foods = dic_chosen_foods["Carnist"]
-        food_weight = dic_food_weight["Carnist"]
-        for i in range(n):
-            sum += food_weight[i] * agribalyse[agribalyse['Ciqual Code'] == chosen_foods[i]][column_name].mean()
-        return sum
-    if diet_name=="Pesci":
-        chosen_foods = dic_chosen_foods["Pesci"]
-        food_weight = dic_food_weight["Pesci"]
-        for i in range(n):
-            sum += food_weight[i] * agribalyse[agribalyse['Ciqual Code'] == chosen_foods[i]][column_name].mean()
-        return sum
-    if diet_name=="Custom":
-        chosen_foods = dic_chosen_foods["Custom"]
-        food_weight = dic_food_weight["Custom"]
-        for i in range(n):
-            sum += food_weight[i] * agribalyse[agribalyse['Ciqual Code'] == chosen_foods[i]][column_name].mean()
-        return sum
-    else:
-        assert False, f"diet_name unknown"
+    chosen_foods = dic_chosen_foods[diet_name]
+    food_weight = dic_food_weight[diet_name]
+    sum = 0
+    for i in range(n):
+        sum += food_weight[i] * agribalyse[agribalyse['Ciqual Code'] == chosen_foods[i]][column_name].mean()
+    return sum
+
+def Impact_normalised(diet_name,indicator):
+
+    n = 6 # number of indicator
+    
+    column_name = indicator_to_column_name[indicator]
+    max_indicator = max([Impact(diet,indicator) for diet in diet_list])
+    min_indicator = min([Impact(diet,indicator) for diet in diet_list])
+    return (Impact(diet_name,indicator) - min_indicator)/(max_indicator-min_indicator)*9 +1
