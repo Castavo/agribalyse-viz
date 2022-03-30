@@ -2,6 +2,7 @@ import streamlit as st
 import altair as alt
 import pandas as pd
 import numpy as np
+import requests
 
 from diet_utils import random_diet
 
@@ -9,10 +10,29 @@ st.title("How's your diet ?")
 
 @st.cache
 def load_agribalyse():
-    url = "https://drive.google.com/uc?export=download&id=1FLyHBVgPsOeChEvDhd_KZCVr9wEFh5Az"
-    return pd.read_csv(url, delimiter=",", decimal=",")
+    synthese_url = "https://drive.google.com/uc?export=download&id=1FLyHBVgPsOeChEvDhd_KZCVr9wEFh5Az"
+    detail_url = "https://drive.google.com/uc?export=download&id=1YlFMYUdDXbivkoOnrRGsolQq84zp-Rk3"
+    agb_synthese =  pd.read_csv(synthese_url, delimiter=",", decimal=",")
+    agb_detail = requests.get(detail_url).json()
+    multi_index = pd.MultiIndex.from_product(
+        [
+            agb_detail[0]["impact_environnemental"].keys(), 
+            agb_detail[0]["impact_environnemental"]["Score unique EF"]["etapes"].keys()], 
+        names=['Impact type', 'Life cycle step'])
+    life_cycle_detail = pd.DataFrame(
+        data=[
+            sum((list(val["etapes"].values()) for val in alim["impact_environnemental"].values()), start=[])
+            for alim in agb_detail
+        ], 
+        columns=multi_index
+    )
+    return agb_synthese, life_cycle_detail
 
-agribalyse = load_agribalyse().copy(deep=True)
+
+agribalyse, life_cycle_detail = load_agribalyse()
+agribalyse = agribalyse.copy(deep=True)
+
+st.text(life_cycle_detail[:10])
 
 # Temporary
 DIETS = dict(zip(
