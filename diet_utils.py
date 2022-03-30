@@ -54,8 +54,10 @@ dic_food_weight = {
     }
 
 def Diet(diet_name):
-
-
+    '''
+        input : diet_name (string)
+        output : dictionnary that give for each food (identification by using Ciqual code) a weight (representing weight eaten during a day)
+    '''
     if diet_name=="Veggie":
         chosen_foods = dic_chosen_foods["Veggie"]
         food_weights = dic_food_weight["Veggie"]
@@ -84,6 +86,10 @@ def Diet(diet_name):
         assert False, f"diet_name unknown"
 
 def Impact(diet_name,indicator):
+    '''
+        input : diet_name = name of the diet chosen (string), indicator = name of the indicator chosen (string)(indicator list must be coherent with indicators of radar chart)
+        output : Total impact of the diet for one day according to the indicator (string)
+    '''
     n = 6 # number of indicator
     indicator_to_column_name = {
         'CO2':'Climate change (KG CO2 EQ / KG product)',

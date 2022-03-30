@@ -76,6 +76,10 @@ with right:
 
 #####################################################################################################################
     st.header("Environmental Impact")
+
+    #############
+#   Radar char using plotly
+    #############
     categories = ['CO2','Ozone Layer depletion','Particles',
               'water&land acidification', 'Land use', 'Terrestrial Eutrophication']
 
@@ -104,3 +108,8 @@ with right:
     showlegend=False
     )
     st.plotly_chart(fig, use_container_width=True)
+
+    #############
+#   Radar char using matplotlib ?
+    #############
+
