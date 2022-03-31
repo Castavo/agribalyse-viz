@@ -43,7 +43,7 @@ def random_diet(food_codes, mean_weight=10, std_dev_weight=5, n_foods=100, seed=
     food_weights = random.normal(loc=mean_weight, scale=std_dev_weight, size=n_foods)
     return defaultdict(float, zip(chosen_foods, food_weights))
 
-diet_list = ["Veggie", "Vegan", "Flexie", "Carnist", "Pesci", "Custom"]
+diet_list = ["Veggie", "Vegan", "Flexie", "Carnist with beef","Carnist with pork", "Pesci"]
 
 brocoli = 20006
 carotte = 20008
@@ -60,21 +60,22 @@ steak = 6253
 saumon = 26038
 pâte = 9811
 riz = 9104
+porc = 30701
 dic_chosen_foods = {
     "Veggie":[brocoli,carotte,pomme,raisin,raclette,oeuf_dur,jus_orange,céréale,riz,pâte],
     "Vegan":[brocoli,carotte,pomme,raisin,lentille,tofu,jus_orange,céréale,riz,pâte],
     "Flexie":[brocoli,carotte,pomme,raisin,raclette,poulet,jus_orange,céréale,riz,pâte],
-    "Carnist":[brocoli,carotte,pomme,raisin,poulet,steak,jus_orange,céréale,riz,pâte],
+    "Carnist with beef":[brocoli,carotte,pomme,raisin,poulet,steak,jus_orange,céréale,riz,pâte],
     "Pesci":[brocoli,carotte,pomme,raisin,raclette,saumon,jus_orange,céréale,riz,pâte],
-    "Custom":[brocoli,carotte,pomme,raisin,raclette,oeuf_dur,jus_orange,céréale,riz,pâte]
+    "Carnist with pork":[brocoli,carotte,pomme,raisin,poulet,porc,jus_orange,céréale,riz,pâte]
     }
 dic_food_weight = {
     "Veggie":[0.1,0.1,0.15,0.1,0.1,0.1,0.1,0.12,0.12,0.12],
     "Vegan":[0.1,0.1,0.15,0.1,0.1,0.1,0.1,0.12,0.12,0.12],
     "Flexie":[0.1,0.1,0.15,0.1,0.1,0.1,0.1,0.12,0.12,0.12],
-    "Carnist":[0.1,0.1,0.15,0.1,0.1,0.1,0.1,0.12,0.12,0.12],
+    "Carnist with beef":[0.1,0.1,0.15,0.1,0.1,0.1,0.1,0.12,0.12,0.12],
     "Pesci":[0.1,0.1,0.15,0.1,0.1,0.1,0.1,0.12,0.12,0.12],
-    "Custom":[0.1,0.1,0.15,0.1,0.1,0.1,0.1,0.12,0.12,0.12]
+    "Carnist with pork":[0.1,0.1,0.15,0.1,0.1,0.1,0.1,0.12,0.12,0.12]
     }
 
 indicator_to_column_name = {

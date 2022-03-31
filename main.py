@@ -40,7 +40,7 @@ Food_group_list = ['Fruits, vegetables, legumes and oilseeds', 'Meat, eggs, fish
 agribalyse.loc[~agribalyse["Food Group"].isin(Food_group_list),"Food Group"] = "Other"
 
 # Temporary
-diet_list = ["Veggie", "Vegan", "Flexie", "Carnist", "Pesci", "Custom"]
+diet_list = ["Veggie", "Vegan", "Flexie", "Carnist with beef","Carnist with pork", "Pesci"]
 DIETS = dict(zip(diet_list,[Diet(diet_name) for diet_name in diet_list]))
 
 
