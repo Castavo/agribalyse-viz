@@ -30,7 +30,7 @@ def load_agribalyse():
     return agb_synthese, life_cycle_detail
 
 
-FOOD_GROUP_LIST = ['Fruits, vegetables, legumes and oilseeds', 'Meat, eggs, fish','Cereal products','Milk and dairy products']
+FOOD_GROUP_LIST = ['Meat, eggs, fish', 'Milk and dairy products', 'Cereal products', 'Fruits, vegetables, legumes and oilseeds']
 
 def random_diet(food_codes, mean_weight=10, std_dev_weight=5, n_foods=1000, seed=42):
     """Returns a random diet"""
@@ -48,7 +48,7 @@ raisin = 13112
 raclette = 12749
 oeuf_dur = 22010
 jus_orange = 2013
-céréale = 32025
+céréale = 32023
 lentille = 20505
 tofu = 20904
 poulet = 36018
@@ -98,13 +98,12 @@ def Impact_total(diet_name, indicator, agribalyse):
         input : diet_name = name of the diet chosen (string), indicator = name of the indicator chosen (string)(indicator list must be coherent with indicators of radar chart)
         output : Total impact of the diet for one day according to the indicator (string)
     '''
-    n = 6 # number of indicator
     
     column_name = INDICATOR_TO_COLUMN_NAME[indicator]
     chosen_foods = DIC_CHOSEN_FOODS[diet_name]
     food_weight = DIC_FOOD_WEIGHT[diet_name]
     sum = 0
-    for i in range(n):
+    for i in range(len(chosen_foods)):
         sum += food_weight[i] * agribalyse[agribalyse['Ciqual Code'] == chosen_foods[i]][column_name].mean()
     return sum
 
@@ -112,21 +111,22 @@ def Impact(diet_name, indicator, food_group, agribalyse):
     '''
         input : diet_name = name of the diet chosen (string), indicator = name of the indicator chosen (string)(indicator list must be coherent with indicators of radar chart)
         output : Total impact of the diet for one day according to the indicator (string)
-    '''
-    n = 6 # number of indicator
-    
+    '''    
     column_name = INDICATOR_TO_COLUMN_NAME[indicator]
     chosen_foods = DIC_CHOSEN_FOODS[diet_name]
     food_weight = DIC_FOOD_WEIGHT[diet_name]
     sum = 0
-    for i in range(n):
-        value = agribalyse[(agribalyse['Ciqual Code'] == chosen_foods[i])&(agribalyse['Food Group']==food_group)][column_name].mean()
+    for i in range(len(chosen_foods)):
+        food = agribalyse[agribalyse['Ciqual Code'] == chosen_foods[i]]
+        if len(food) != 1:
+            print(chosen_foods[i])
+        if not food['Food Group'].iloc[0] == food_group:
+            continue
+        value = food[column_name].mean()
         if np.isnan(value):
             sum += 0
         else:
             sum += food_weight[i] * value
-        if np.isnan(sum):
-            sum = 0
     return sum
 
 def Impact_normalised(diet_name, indicator, food_group, agribalyse):    

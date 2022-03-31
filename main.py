@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 
 import plotly.graph_objects as go
-import plotly.express as px
 import requests
 
 from diet_utils import Impact_normalised, Diet, DIET_LIST, FOOD_GROUP_LIST, INDICATOR_TO_COLUMN_NAME
@@ -20,6 +19,8 @@ def load_agribalyse():
     print("Synthesis loaded", len(agb_synthesis))
 
     agb_synthesis.set_index("Ciqual Code", inplace=True, drop=False)
+    global FOOD_GROUP_LIST
+    agb_synthesis.loc[~agb_synthesis["Food Group"].isin(FOOD_GROUP_LIST), "Food Group"] = "Other"
 
     nutrition_url = "https://drive.google.com/uc?export=download&id=1sHOHK52i1LLv2WEnSWMlE9TbgL3pyQtJ"
     nutrition =  pd.read_csv(nutrition_url, delimiter=";", decimal=",")
@@ -58,10 +59,8 @@ def load_agribalyse():
 AGRIBALYSE_ORIG, LIFE_CYCLE_DETAIL_ORIG, ENV_IMPACT_CATS, STEP_NAMES = load_agribalyse()
 AGRIBALYSE = AGRIBALYSE_ORIG.copy(deep=True)
 LIFE_CYCLE_DETAIL = LIFE_CYCLE_DETAIL_ORIG.copy(deep=True)
-
-AGRIBALYSE.loc[~AGRIBALYSE["Food Group"].isin(FOOD_GROUP_LIST), "Food Group"] = "Other"
-FOOD_GROUP_LIST += ["Other"]
-
+if not "Other" in FOOD_GROUP_LIST:
+    FOOD_GROUP_LIST += ["Other"]
 DIETS = dict(zip(DIET_LIST, [Diet(diet_name) for diet_name in DIET_LIST]))
 
 
@@ -102,45 +101,45 @@ with right:
     st.altair_chart(composition)
 
 
-    # =========================== Environmental impact ================================
-    st.header("Environmental Impact")
+# =========================== Environmental impact ================================
+st.header("Environmental Impact")
 
-    fig = go.Figure()
+st.markdown("This spider chart is normalized by dividing each indicator by the maximum value over all diets.")
 
-    cumulated_impacts = np.array([
-        .1 + np.cumsum(
-            [
-                Impact_normalised(
-                    st.session_state.diet_chosen, 
-                    indicator, 
-                    food_group, 
-                    AGRIBALYSE
-                ) 
-                for food_group in FOOD_GROUP_LIST
-            ]
-        )
-        for indicator in INDICATOR_TO_COLUMN_NAME
-    ])
+fig = go.Figure()
 
-    for i, group in enumerate(FOOD_GROUP_LIST[::-1]):
-        fig.add_trace(go.Scatterpolar(
+cumulated_impacts = np.array([
+    .1 + np.cumsum(
+        [
+            Impact_normalised(
+                st.session_state.diet_chosen, 
+                indicator, 
+                food_group, 
+                AGRIBALYSE
+            ) 
+            for food_group in FOOD_GROUP_LIST
+        ]
+    )
+    for indicator in INDICATOR_TO_COLUMN_NAME
+])
+
+for i, group in enumerate(FOOD_GROUP_LIST[::-1]):
+    fig.add_trace(go.Scatterpolar(
         r=cumulated_impacts[:, -i-1],
         theta=list(INDICATOR_TO_COLUMN_NAME.keys()),
         fill='toself',
         name=group
     ))    
 
-    fig.update_layout(
-    polar=dict(
-        radialaxis=dict(
-        visible=True,
-        range=[0, 11]
-        )),
-    showlegend=True
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-
+fig.update_layout(
+polar=dict(
+    radialaxis=dict(
+    visible=True,
+    range=[0, 11]
+    )),
+showlegend=True
+)
+st.plotly_chart(fig, use_container_width=True)
 
 # =========================== Life cycle step environmental impact ================================
 st.header("Environmental impact at each step of the life cycle")
