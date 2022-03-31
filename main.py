@@ -3,77 +3,36 @@ import altair as alt
 import pandas as pd
 import numpy as np
 
-from collections import defaultdict
-import plotly.figure_factory as ff
 import plotly.graph_objects as go
 import plotly.express as px
 import requests
 
-from diet_utils import Impact_normalised, random_diet,Diet
-=======
+from diet_utils import Impact_normalised, Diet, DIET_LIST, FOOD_GROUP_LIST, INDICATOR_TO_COLUMN_NAME
 import requests
 
-from diet_utils import random_diet
 from color_scale import FOOD_COLOR_SCALE
 
-
-st.title("How's your diet ?")
 
 @st.cache
 def load_agribalyse():
     synthese_url = "https://drive.google.com/uc?export=download&id=1FLyHBVgPsOeChEvDhd_KZCVr9wEFh5Az"
-    detail_url = "https://drive.google.com/uc?export=download&id=1YlFMYUdDXbivkoOnrRGsolQq84zp-Rk3"
-    agb_synthese =  pd.read_csv(synthese_url, delimiter=",", decimal=",")
-    agb_detail = requests.get(detail_url).json()
-    multi_index = pd.MultiIndex.from_product(
-        [
-            agb_detail[0]["impact_environnemental"].keys(), 
-            agb_detail[0]["impact_environnemental"]["Score unique EF"]["etapes"].keys()], 
-        names=['Impact type', 'Life cycle step'])
-    life_cycle_detail = pd.DataFrame(
-        data=[
-            sum((list(val["etapes"].values()) for val in alim["impact_environnemental"].values()), start=[])
-            for alim in agb_detail
-        ], 
-        columns=multi_index
-    )
-    return agb_synthese, life_cycle_detail
-
-
-agribalyse, life_cycle_detail = load_agribalyse()
-agribalyse = agribalyse.copy(deep=True)
-
-Food_group_list = ['Fruits, vegetables, legumes and oilseeds', 'Meat, eggs, fish','Cereal products','Milk and dairy products']
-agribalyse.loc[~agribalyse["Food Group"].isin(Food_group_list),"Food Group"] = "Other"
-
-# Temporary
-diet_list = ["Veggie", "Vegan", "Flexie", "Carnist with beef","Carnist with pork", "Pesci"]
-DIETS = dict(zip(diet_list,[Diet(diet_name) for diet_name in diet_list]))
-
-
-# Chosing colors for each food group
-# cat_20 = "1f77b4aec7e8ff7f0effbb782ca02c98df8ad62728ff98969467bdc5b0d58c564bc49c94e377c2f7b6d27f7f7fc7c7c7bcbd22dbdb8d17becf9edae5"
-cat_20 = np.array(['#847685','#17d11a','#f7161a','#fffb00','#00fffb'])
-domain = np.array([
-    'Other', 'Fruits, vegetables, legumes and oilseeds',
-    'Meat, eggs, fish', 'Cereal products', 
-    'Milk and dairy products'
-])
-color_range = np.array([
-    cat_20[0], cat_20[1], cat_20[2],
-    cat_20[3], cat_20[4]])
-sort_idx = np.argsort(domain)
-FOOD_COLOR_SCALE=alt.Scale(domain=domain[sort_idx], range=cat_20[sort_idx])
-
-
-def update_weights(database, diet):
-    database['weight'] = database['Ciqual Code'].map(diet)
     agb_synthesis =  pd.read_csv(synthese_url, delimiter=",", decimal=",")
-    print("Synthesis loaded")
+    print("Synthesis loaded", len(agb_synthesis))
+
+    agb_synthesis.set_index("Ciqual Code", inplace=True, drop=False)
+
+    nutrition_url = "https://drive.google.com/uc?export=download&id=1sHOHK52i1LLv2WEnSWMlE9TbgL3pyQtJ"
+    nutrition =  pd.read_csv(nutrition_url, delimiter=";", decimal=",")
+    print("Nutritional values loaded", len(nutrition))
+
+    nutrition = nutrition[nutrition["HYPOTH"]=="MB"]
+    nutrition.set_index("alim_code", inplace=True)
+    nutrition.drop(["FOOD_LABEL", "HYPOTH"], axis=1)
+    agb_synthesis = agb_synthesis.join(nutrition, how="inner")
 
     detail_url = "https://drive.google.com/uc?export=download&id=1dxL_5Mm67ncoC28FCJsvaOJgAjH5DMD7"
     agb_detail = requests.get(detail_url).json()
-    print("Detail loaded")
+    print("Detail loaded", len(agb_detail))
 
     env_impact_cats = list(sorted(agb_detail[0]["environmental_impact"].keys()))
     step_names = list(agb_detail[0]["environmental_impact"]["Single Score EF"]["steps"].keys())
@@ -100,13 +59,16 @@ AGRIBALYSE_ORIG, LIFE_CYCLE_DETAIL_ORIG, ENV_IMPACT_CATS, STEP_NAMES = load_agri
 AGRIBALYSE = AGRIBALYSE_ORIG.copy(deep=True)
 LIFE_CYCLE_DETAIL = LIFE_CYCLE_DETAIL_ORIG.copy(deep=True)
 
-# Temporary
-DIETS = dict(zip(
-    ["Veggie", "Vegan", "Flexie", "Carnist", "Pesci", "Custom"],
-    [random_diet(AGRIBALYSE["Ciqual Code"], seed=i) for i in range(6)]
-))
+AGRIBALYSE.loc[~AGRIBALYSE["Food Group"].isin(FOOD_GROUP_LIST), "Food Group"] = "Other"
+FOOD_GROUP_LIST += ["Other"]
+
+DIETS = dict(zip(DIET_LIST, [Diet(diet_name) for diet_name in DIET_LIST]))
+
 
 # =========================== Charts  ================================
+
+
+st.title("How's your diet ?")
 
 def update_weights(diet):
     AGRIBALYSE['weight'] = AGRIBALYSE['Ciqual Code'].map(diet)
@@ -126,14 +88,8 @@ with left:
     )
     update_weights(DIETS[st.session_state.diet_chosen])
 
-    st.header("Environmental impact breakdown")
-
-    # data = LC_impact_diet(st.session_state.diet_chosen,)
-    long_df = px.data.medals_long()
-
-    # stacked_bar_chart = px.bar(long_df, x="Food Group", y="Impact", color="Life Cycle Step", title="")
-    stacked_bar_chart = px.bar(long_df, x="nation", y="count", color="medal", title="Long-Form Input")
-    st.plotly_chart(stacked_bar_chart, use_container_width=True)
+    # =========================== Diet nutritional value ================================
+    st.header("Nutritional value")
 
 
 with right:
@@ -149,60 +105,30 @@ with right:
     # =========================== Environmental impact ================================
     st.header("Environmental Impact")
 
-    categories = ['CO2','Ozone Layer depletion','Particles',
-              'water&land acidification', 'Land use', 'Terrestrial Eutrophication']
-
     fig = go.Figure()
 
-    fig.add_trace(go.Scatterpolar(
-        r=[Impact_normalised(st.session_state.diet_chosen,indicator,'Meat, eggs, fish') + 0.1 +
-            Impact_normalised(st.session_state.diet_chosen,indicator,'Milk and dairy products') + 0.1 +
-            Impact_normalised(st.session_state.diet_chosen,indicator,'Cereal products') + 0.1 +
-            Impact_normalised(st.session_state.diet_chosen,indicator,'Fruits, vegetables, legumes and oilseeds') + 0.1 +
-            Impact_normalised(st.session_state.diet_chosen,indicator,'Other') + 0.1 
-         for indicator in categories],
-        theta=categories,
-        fill='toself',
-        name='Other'
-    ))
+    cumulated_impacts = np.array([
+        .1 + np.cumsum(
+            [
+                Impact_normalised(
+                    st.session_state.diet_chosen, 
+                    indicator, 
+                    food_group, 
+                    AGRIBALYSE
+                ) 
+                for food_group in FOOD_GROUP_LIST
+            ]
+        )
+        for indicator in INDICATOR_TO_COLUMN_NAME
+    ])
 
-    fig.add_trace(go.Scatterpolar(
-        r=[Impact_normalised(st.session_state.diet_chosen,indicator,'Meat, eggs, fish') + 0.1 +
-            Impact_normalised(st.session_state.diet_chosen,indicator,'Milk and dairy products') +0.1 +
-            Impact_normalised(st.session_state.diet_chosen,indicator,'Cereal products') +0.1 +
-            Impact_normalised(st.session_state.diet_chosen,indicator,'Fruits, vegetables, legumes and oilseeds') + 0.1
-         for indicator in categories],
-        theta=categories,
+    for i, group in enumerate(FOOD_GROUP_LIST[::-1]):
+        fig.add_trace(go.Scatterpolar(
+        r=cumulated_impacts[:, -i-1],
+        theta=list(INDICATOR_TO_COLUMN_NAME.keys()),
         fill='toself',
-        name='Fruits, vegetables, legumes and oilseeds'
-    ))
-
-    fig.add_trace(go.Scatterpolar(
-        r=[Impact_normalised(st.session_state.diet_chosen,indicator,'Meat, eggs, fish') + 0.1 +
-            Impact_normalised(st.session_state.diet_chosen,indicator,'Milk and dairy products') + 0.1 +
-            Impact_normalised(st.session_state.diet_chosen,indicator,'Cereal products')+ 0.1
-         for indicator in categories],
-        theta=categories,
-        fill='toself',
-        name='Cereal products'
-    ))
-    fig.add_trace(go.Scatterpolar(
-        r=[Impact_normalised(st.session_state.diet_chosen,indicator,'Meat, eggs, fish') + 0.1 +
-            Impact_normalised(st.session_state.diet_chosen,indicator,'Milk and dairy products') + 0.1
-         for indicator in categories],
-        theta=categories,
-        fill='toself',
-        name='Milk and dairy products'
-    ))
-
-    fig.add_trace(go.Scatterpolar(
-        # st.session_state.diet_chosen représente la diet sélectionné
-        r=[Impact_normalised(st.session_state.diet_chosen,indicator,'Meat, eggs, fish') + 0.1 for indicator in categories],
-        theta=categories,
-        fill='toself',
-        name='Meat, eggs, fish'
-    ))
-    
+        name=group
+    ))    
 
     fig.update_layout(
     polar=dict(
@@ -216,7 +142,7 @@ with right:
 
 
 
-# =========================== Life cycle step impact ================================
+# =========================== Life cycle step environmental impact ================================
 st.header("Environmental impact at each step of the life cycle")
 
 st.selectbox(
