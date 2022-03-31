@@ -36,7 +36,7 @@ agribalyse = agribalyse.copy(deep=True)
 Food_group_list = ['Fruits, vegetables, legumes and oilseeds', 'Meat, eggs, fish','Cereal products','Milk and dairy products']
 agribalyse.loc[~agribalyse["Food Group"].isin(Food_group_list),"Food Group"] = "Other"
 
-def random_diet(food_codes, mean_weight=10, std_dev_weight=5, n_foods=100, seed=42):
+def random_diet(food_codes, mean_weight=10, std_dev_weight=5, n_foods=1000, seed=42):
     """Returns a random diet"""
     random = np.random.default_rng(seed)
     chosen_foods = random.choice(food_codes, n_foods, replace=False)
