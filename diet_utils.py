@@ -7,12 +7,34 @@ And each line would be how much of the food chosen you eat per year (?)
 from collections import defaultdict
 import numpy as np
 import pandas as pd
+import requests
+
 
 def load_agribalyse():
-    url = "https://drive.google.com/uc?export=download&id=1FLyHBVgPsOeChEvDhd_KZCVr9wEFh5Az"
-    return pd.read_csv(url, delimiter=",", decimal=",")
+    synthese_url = "https://drive.google.com/uc?export=download&id=1FLyHBVgPsOeChEvDhd_KZCVr9wEFh5Az"
+    detail_url = "https://drive.google.com/uc?export=download&id=1YlFMYUdDXbivkoOnrRGsolQq84zp-Rk3"
+    agb_synthese =  pd.read_csv(synthese_url, delimiter=",", decimal=",")
+    agb_detail = requests.get(detail_url).json()
+    multi_index = pd.MultiIndex.from_product(
+        [
+            agb_detail[0]["impact_environnemental"].keys(), 
+            agb_detail[0]["impact_environnemental"]["Score unique EF"]["etapes"].keys()], 
+        names=['Impact type', 'Life cycle step'])
+    life_cycle_detail = pd.DataFrame(
+        data=[
+            sum((list(val["etapes"].values()) for val in alim["impact_environnemental"].values()), start=[])
+            for alim in agb_detail
+        ], 
+        columns=multi_index
+    )
+    return agb_synthese, life_cycle_detail
 
-agribalyse = load_agribalyse().copy(deep=True)
+
+agribalyse, life_cycle_detail = load_agribalyse()
+agribalyse = agribalyse.copy(deep=True)
+
+Food_group_list = ['Fruits, vegetables, legumes and oilseeds', 'Meat, eggs, fish','Cereal products','Milk and dairy products']
+agribalyse.loc[~agribalyse["Food Group"].isin(Food_group_list),"Food Group"] = "Other"
 
 def random_diet(food_codes, mean_weight=10, std_dev_weight=5, n_foods=100, seed=42):
     """Returns a random diet"""
@@ -69,32 +91,10 @@ def Diet(diet_name):
         input : diet_name (string)
         output : dictionnary that give for each food (identification by using Ciqual code) a weight (representing weight eaten during a day)
     '''
-    if diet_name=="Veggie":
-        chosen_foods = dic_chosen_foods["Veggie"]
-        food_weights = dic_food_weight["Veggie"]
-        return defaultdict(float, zip(chosen_foods, food_weights))
-    if diet_name=="Vegan":
-        chosen_foods = dic_chosen_foods["Vegan"]
-        food_weights = dic_food_weight["Vegan"]
-        return defaultdict(float, zip(chosen_foods, food_weights))
-    if diet_name=="Flexie":
-        chosen_foods = dic_chosen_foods["Flexie"]
-        food_weights = dic_food_weight["Flexie"]
-        return defaultdict(float, zip(chosen_foods, food_weights))
-    if diet_name=="Carnist":
-        chosen_foods = dic_chosen_foods["Carnist"]
-        food_weights = dic_food_weight["Carnist"]
-        return defaultdict(float, zip(chosen_foods, food_weights))
-    if diet_name=="Pesci":
-        chosen_foods = dic_chosen_foods["Pesci"]
-        food_weights = dic_food_weight["Pesci"]
-        return defaultdict(float, zip(chosen_foods, food_weights))
-    if diet_name=="Custom":
-        chosen_foods = dic_chosen_foods["Custom"]
-        food_weights = dic_food_weight["Custom"]
-        return defaultdict(float, zip(chosen_foods, food_weights))
-    else:
-        assert False, f"diet_name unknown"
+    chosen_foods = dic_chosen_foods[diet_name]
+    food_weights = dic_food_weight[diet_name]
+    return defaultdict(float, zip(chosen_foods, food_weights))
+
 
 def Impact(diet_name,indicator):
     '''
@@ -115,7 +115,6 @@ def Impact_normalised(diet_name,indicator):
 
     n = 6 # number of indicator
     
-    column_name = indicator_to_column_name[indicator]
     max_indicator = max([Impact(diet,indicator) for diet in diet_list])
     min_indicator = min([Impact(diet,indicator) for diet in diet_list])
     return (Impact(diet_name,indicator) - min_indicator)/(max_indicator-min_indicator)*9 +1
