@@ -96,7 +96,7 @@ def Diet(diet_name):
     return defaultdict(float, zip(chosen_foods, food_weights))
 
 
-def Impact(diet_name,indicator):
+def Impact_total(diet_name,indicator):
     '''
         input : diet_name = name of the diet chosen (string), indicator = name of the indicator chosen (string)(indicator list must be coherent with indicators of radar chart)
         output : Total impact of the diet for one day according to the indicator (string)
@@ -111,10 +111,31 @@ def Impact(diet_name,indicator):
         sum += food_weight[i] * agribalyse[agribalyse['Ciqual Code'] == chosen_foods[i]][column_name].mean()
     return sum
 
-def Impact_normalised(diet_name,indicator):
+def Impact(diet_name,indicator,food_group):
+    '''
+        input : diet_name = name of the diet chosen (string), indicator = name of the indicator chosen (string)(indicator list must be coherent with indicators of radar chart)
+        output : Total impact of the diet for one day according to the indicator (string)
+    '''
+    n = 6 # number of indicator
+    
+    column_name = indicator_to_column_name[indicator]
+    chosen_foods = dic_chosen_foods[diet_name]
+    food_weight = dic_food_weight[diet_name]
+    sum = 0
+    for i in range(n):
+        value = agribalyse[(agribalyse['Ciqual Code'] == chosen_foods[i])&(agribalyse['Food Group']==food_group)][column_name].mean()
+        if np.isnan(value):
+            sum += 0
+        else:
+            sum += food_weight[i] * value
+        if np.isnan(sum):
+            sum = 0
+    return sum
+
+def Impact_normalised(diet_name,indicator,food_group):
 
     n = 6 # number of indicator
     
-    max_indicator = max([Impact(diet,indicator) for diet in diet_list])
-    min_indicator = min([Impact(diet,indicator) for diet in diet_list])
-    return (Impact(diet_name,indicator) - min_indicator)/(max_indicator-min_indicator)*9 +1
+    max_indicator = max([Impact_total(diet,indicator) for diet in diet_list])
+    # min_indicator = min([Impact_total(diet,indicator) for diet in diet_list])
+    return Impact(diet_name,indicator,food_group)/max_indicator*10

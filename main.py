@@ -8,17 +8,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import requests
 
-from diet_utils import Impact_normalised, random_diet,Diet,Impact
-
-# Add histogram data
-x1 = np.random.randn(200) - 2
-x2 = np.random.randn(200)
-x3 = np.random.randn(200) + 2
-
-# Group data together
-hist_data = [x1, x2, x3]
-
-group_labels = ['Group 1', 'Group 2', 'Group 3']
+from diet_utils import Impact_normalised, random_diet,Diet
 
 st.title("How's your diet ?")
 
@@ -105,27 +95,60 @@ with right:
 #####################################################################################################################
     st.header("Environmental Impact")
 
-    #############
-#   Radar char using plotly
-    #############
     categories = ['CO2','Ozone Layer depletion','Particles',
               'water&land acidification', 'Land use', 'Terrestrial Eutrophication']
 
     fig = go.Figure()
 
     fig.add_trace(go.Scatterpolar(
-        # st.session_state.diet_chosen représente la diet sélectionné
-        r=[Impact_normalised(st.session_state.diet_chosen,indicator) for indicator in categories],
+        r=[Impact_normalised(st.session_state.diet_chosen,indicator,'Meat, eggs, fish') + 0.1 +
+            Impact_normalised(st.session_state.diet_chosen,indicator,'Milk and dairy products') + 0.1 +
+            Impact_normalised(st.session_state.diet_chosen,indicator,'Cereal products') + 0.1 +
+            Impact_normalised(st.session_state.diet_chosen,indicator,'Fruits, vegetables, legumes and oilseeds') + 0.1 +
+            Impact_normalised(st.session_state.diet_chosen,indicator,'Other') + 0.1 
+         for indicator in categories],
         theta=categories,
         fill='toself',
-        name='Product A'
+        name='Other'
     ))
-    # fig.add_trace(go.Scatterpolar(
-    #     r=[4, 3, 2.5, 1, 2],
-    #     theta=categories,
-    #     fill='toself',
-    #     name='Product B'
-    # ))
+
+    fig.add_trace(go.Scatterpolar(
+        r=[Impact_normalised(st.session_state.diet_chosen,indicator,'Meat, eggs, fish') + 0.1 +
+            Impact_normalised(st.session_state.diet_chosen,indicator,'Milk and dairy products') +0.1 +
+            Impact_normalised(st.session_state.diet_chosen,indicator,'Cereal products') +0.1 +
+            Impact_normalised(st.session_state.diet_chosen,indicator,'Fruits, vegetables, legumes and oilseeds') + 0.1
+         for indicator in categories],
+        theta=categories,
+        fill='toself',
+        name='Fruits, vegetables, legumes and oilseeds'
+    ))
+
+    fig.add_trace(go.Scatterpolar(
+        r=[Impact_normalised(st.session_state.diet_chosen,indicator,'Meat, eggs, fish') + 0.1 +
+            Impact_normalised(st.session_state.diet_chosen,indicator,'Milk and dairy products') + 0.1 +
+            Impact_normalised(st.session_state.diet_chosen,indicator,'Cereal products')+ 0.1
+         for indicator in categories],
+        theta=categories,
+        fill='toself',
+        name='Cereal products'
+    ))
+    fig.add_trace(go.Scatterpolar(
+        r=[Impact_normalised(st.session_state.diet_chosen,indicator,'Meat, eggs, fish') + 0.1 +
+            Impact_normalised(st.session_state.diet_chosen,indicator,'Milk and dairy products') + 0.1
+         for indicator in categories],
+        theta=categories,
+        fill='toself',
+        name='Milk and dairy products'
+    ))
+
+    fig.add_trace(go.Scatterpolar(
+        # st.session_state.diet_chosen représente la diet sélectionné
+        r=[Impact_normalised(st.session_state.diet_chosen,indicator,'Meat, eggs, fish') + 0.1 for indicator in categories],
+        theta=categories,
+        fill='toself',
+        name='Meat, eggs, fish'
+    ))
+    
 
     fig.update_layout(
     polar=dict(
@@ -133,11 +156,8 @@ with right:
         visible=True,
         range=[0, 11]
         )),
-    showlegend=False
+    showlegend=True
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    #############
-#   Radar char using matplotlib ?
-    #############
 
