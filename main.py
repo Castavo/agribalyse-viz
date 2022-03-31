@@ -88,7 +88,7 @@ with left:
     update_weights(DIETS[st.session_state.diet_chosen])
 
     # =========================== Diet nutritional value ================================
-    st.header("Nutritional value")
+    # st.header("Nutritional value")
 
 
 with right:
